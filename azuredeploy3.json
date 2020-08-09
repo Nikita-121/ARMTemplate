@@ -1,0 +1,394 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+        "parameters": {
+        "storageName": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 24,
+            "defaultValue": "learningv2"
+        },
+        "envTag": {
+            "type": "string"
+        },
+        "componentIDTag": {
+            "type": "string"
+        },
+        "tenantID": {
+            "type": "string"
+        },
+        "keyvaultName": {
+            "type": "string"
+        },
+        "vaults_servicePrincipal_objectId": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "Central US"
+        },
+        "serverfarms_appServicePlanName": {
+            "type": "string",
+            "defaultValue": "exampleplan"
+        },
+        "webAppPortalName": {
+            "type": "string",
+            "metadata": {
+                "description": "Base name of the resource such as web app name and app service plan "
+            },
+            "minLength": 2
+        },
+        "windowsFxVersion": {
+            "type": "string",
+            "defaultValue": "node|10.14.1",
+            "metadata": {
+                "description": "The Runtime stack of current web app"
+            }
+        },
+        "appInsightsName": {
+            "type": "string"
+        },
+        "appInsights_dataRetention": {
+            "type": "int",
+            "defaultValue": 30,
+            "minValue": 30,
+            "maxValue": 90
+        },
+        "appInsights_sku_name": {
+            "type": "string",
+            "defaultValue": "F1"
+        },
+        "appInsights_sku_tier": {
+            "type": "string",
+            "defaultValue": "Free"
+        },
+        "appInsights_sku_family": {
+            "type": "string",
+            "defaultValue": "F"
+        },
+        "appInsights_sku_size": {
+            "type": "string",
+            "defaultValue": "F1"
+        },
+        "appInsights_sku_capacity": {
+            "type": "int",
+            "defaultValue": 0
+        },
+        "actionGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique name (within the Resource Group) for the Action group."
+            }
+        },
+        "actionGroupShortName": {
+            "type": "string",
+            "metadata": {
+                "description": "Short name (maximum 12 characters) for the Action group."
+            }
+        },
+        "alertsEmail": {
+            "type": "string",
+            "metadata": {
+                "description": "Email address to send the alert notification"
+            }
+        },
+        "alertRulesFailureAnomalies": {
+            "defaultValue": "failure anomalies",
+            "type": "String"
+        },
+        "siteextensions_name": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "siteextensions_apiversion": {
+            "type": "string"
+        },
+        "storageAccount_redundancy": {
+            "type" : "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('storageName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "envTag": "[parameters('envTag')]",
+                "componentIDTag": "[parameters('componentIDTag')]"
+            },
+            "sku": {
+                "name": "[parameters('storageAccount_redundancy')]",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "name": "[parameters('keyvaultName')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2016-10-01",
+            "location": "[parameters('location')]",
+            "tags": {
+                "envTag": "[parameters('envTag')]",
+                "componentIDTag": "[parameters('componentIDTag')]"
+            },
+            "properties": {
+                "tenantId": "[parameters('tenantID')]",
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "accessPolicies": [
+                    {
+                        "tenantId": "[parameters('tenantID')]",
+                        "objectId": "[parameters('vaults_servicePrincipal_objectId')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List",
+                                "Set",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "ManageContacts",
+                                "ManageIssuers",
+                                "GetIssuers",
+                                "ListIssuers",
+                                "SetIssuers",
+                                "DeleteIssuers"
+                            ]
+                        }
+                    },
+                    {
+                        "tenantId": "[parameters('tenantID')]",
+                        "objectId": "c60dd637-f33f-4279-9ab3-1329d693a24a",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List",
+                                "Set",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "ManageContacts",
+                                "ManageIssuers",
+                                "GetIssuers",
+                                "ListIssuers",
+                                "SetIssuers",
+                                "DeleteIssuers"
+                            ]
+                        }
+                    }
+                ],
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": true,
+                "enabledForTemplateDeployment": true
+            }
+        },
+        {
+            "type": "Microsoft.Insights/Components",
+            "apiVersion": "2018-05-01-preview",
+            "name": "[parameters('appInsightsName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "envTag": "[parameters('envTag')]",
+                "componentIDTag": "[parameters('componentIDTag')]",
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('webAppPortalName'))]": "Resource"
+            },
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web",
+                "RetentionInDays": "[parameters('appInsights_dataRetention')]",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2016-09-01",
+            "name": "[parameters('serverfarms_appServicePlanName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "envTag": "[parameters('envTag')]",
+                "componentIDTag": "[parameters('componentIDTag')]"
+            },
+            "sku": {
+                "name": "[parameters('appInsights_sku_name')]",
+                "tier": "[parameters('appInsights_sku_tier')]",
+                "size": "[parameters('appInsights_sku_size')]",
+                "family": "[parameters('appInsights_sku_family')]",
+                "capacity": "[parameters('appInsights_sku_capacity')]"
+            },
+            "kind": "app",
+            "properties": {
+                "perSiteScaling": false,
+                "reserved": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('webAppPortalName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "envTag": "[parameters('envTag')]",
+                "componentIDTag": "[parameters('componentIDTag')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_appServicePlanName'))]",
+                "[resourceId('Microsoft.Insights/Components', parameters('appInsightsName'))]"
+            ],
+            "kind": "app",
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_appServicePlanName'))]",
+                "siteConfig": {
+                    "windowsFxVersion": "[parameters('windowsFxVersion')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "[parameters('siteextensions_apiversion')]",
+            "name": "[parameters('siteextensions_name')]",
+            "type": "Microsoft.Web/sites/siteextensions",
+            "properties": {},
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('webAppPortalName'))]"
+            ]
+        },
+        {
+            "apiVersion": "2018-11-01",
+            "name": "appsettings",
+            "type": "Microsoft.Web/sites/config",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites',  parameters('webAppPortalName'))]",
+                "[resourceId('Microsoft.Insights/Components', parameters('appInsightsName'))]"
+
+            ],
+            "properties": {
+                "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference( resourceId('Microsoft.Insights/Components',parameters('appInsightsName')),'2018-05-01-preview').InstrumentationKey]"
+            }
+        },
+        {
+            "type": "microsoft.insights/actionGroups",
+            "apiVersion": "2019-03-01",
+            "name": "[parameters('actionGroupName')]",
+            "location": "Global",
+            "tags": {
+                "envTag": "[parameters('envTag')]",
+                "componentIDTag": "[parameters('componentIDTag')]"
+            },
+            "properties": {
+                "groupShortName": "[parameters('actionGroupShortName')]",
+                "enabled": true,
+                "emailReceivers": [
+                    {
+                        "name": "AlertsEmail",
+                        "emailAddress": "[parameters('alertsEmail')]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "microsoft.alertsmanagement/smartdetectoralertrules",
+            "apiVersion": "2019-06-01",
+            "name": "[parameters('alertRulesFailureAnomalies')]",
+            "location": "global",
+            "tags": {
+                "envTag": "[parameters('envTag')]",
+                "componentIDTag": "[parameters('componentIDTag')]"
+            },
+            "dependsOn": [
+                "[resourceId('microsoft.insights/components', parameters('appInsightsName'))]",
+                "[resourceId('microsoft.insights/actionGroups', parameters('actionGroupName'))]"
+            ],
+            "properties": {
+                "description": "Failure Anomalies notifies you of an unusual rise in the rate of failed HTTP requests or dependency calls.",
+                "state": "Enabled",
+                "severity": "Sev3",
+                "frequency": "PT1M",
+                "detector": {
+                    "id": "FailureAnomaliesDetector",
+                    "name": "Failure Anomalies",
+                    "supportedResourceTypes": [
+                        "ApplicationInsights"
+                    ]
+                },
+                "scope": [
+                    "[resourceId('microsoft.insights/components', parameters('appInsightsName'))]"
+                ],
+                "actionGroups": {
+                    "groupIds": [
+                        "[resourceId('microsoft.insights/actionGroups', parameters('actionGroupName'))]"
+                    ]
+                }
+            }
+        }
+    ]
+}
